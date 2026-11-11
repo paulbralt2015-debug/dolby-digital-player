@@ -1,0 +1,24 @@
+name: Build Windows
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt pyinstaller
+      - name: libmpv (lecture vidéo uniquement)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download -R shinchiro/mpv-winbuild-cmake -p "mpv-dev-x86_64-2*.7z" -O mpv.7z
+          7z e mpv.7z libmpv-2.dll -y
+          ls -la libmpv-2.dll
+      - run: pyinstaller --noconfirm --onefile --windowed --name DolbyDigitalPlayer --add-binary "libmpv-2.dll;." main.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DolbyDigitalPlayer
+          path: dist/DolbyDigitalPlayer.exe
